@@ -42,6 +42,6 @@
 #define FALCON_MONT2 10952 // pow(4, 16, 12289)
 #define FALCON_MONT_QINV 10908
 
-#define _APPLE_M1_ 1
-#define BENCH_CYCLES 1
+#define _APPLE_M1_ 0
+
 #endif

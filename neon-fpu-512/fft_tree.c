@@ -174,13 +174,13 @@ static inline void ZfN(poly_mergeFFT_log4)(fpr *f, const fpr *f0, const fpr *f1)
  */
 static inline void ZfN(poly_mergeFFT_log3)(fpr *f, const fpr *f0, const fpr *f1)
 {
-    /*
+    /* 
     n = 8, hn = 4, qn = 2
     a_re = f0[0, 1]
     a_im = f0[2, 3]
     d_re = f1[0, 1]
     d_im = f1[2, 3]
-
+    
 
     b_re = 0*8  - 2*9
     b_re = 1*10 - 3*11
@@ -225,7 +225,7 @@ static inline void ZfN(poly_mergeFFT_log3)(fpr *f, const fpr *f0, const fpr *f1)
 static inline void ZfN(poly_mergeFFT_log2)(fpr *f, const fpr *f0, const fpr *f1)
 {
 
-    /*
+    /* 
     n = 4; hn = 2; qn = 1;
     a_re = f0[0];
     a_im = f0[1];
@@ -252,20 +252,26 @@ static inline void ZfN(poly_mergeFFT_log2)(fpr *f, const fpr *f0, const fpr *f1)
     vfsub(t_re_im.val[1], a_re_im, b_re_im);
 
     vstore2(&f[0], t_re_im);
-#else
-    fpr a_re, a_im, b_re, b_im, d_re, d_im;
+#else 
+    fpr a_re, a_im, b_re, b_im, d_re, d_im, t_re, t_im;
     a_re = f0[0];
     a_im = f0[1];
-    b_re = f1[0];
-    b_im = f1[1];
+    d_re = f1[0];
+    d_im = f1[1];
 
-    d_re = b_re * fpr_gm_tab[4] - b_im * fpr_gm_tab[5];
-    d_im = b_re * fpr_gm_tab[5] + b_im * fpr_gm_tab[4];
+    b_re = d_re*fpr_gm_tab[4] - d_im*fpr_gm_tab[5];
+    b_im = d_re*fpr_gm_tab[5] + d_im*fpr_gm_tab[4];
 
-    f[0] = a_re + d_re;
-    f[2] = a_im + d_im;
-    f[1] = a_re - d_re;
-    f[3] = a_im - d_im;
+    t_re = a_re + b_re;
+    t_im = a_im + b_im;
+
+    d_re = a_re - b_re;
+    d_im = a_im - b_im;
+
+    f[0] = t_re;
+    f[1] = d_re;
+    f[2] = t_im;
+    f[3] = d_im;
 
 #endif
 }
@@ -307,6 +313,8 @@ void ZfN(poly_merge_fft)(fpr *restrict f, const fpr *restrict f0,
 static void ZfN(poly_splitFFT_log2)(fpr *restrict f0, fpr *restrict f1,
                                     const fpr *restrict f)
 {
+    float64x2x2_t t;
+    float64x2_t s, v;
 
     /*
     n = 4; hn = 2; qn = 1;
@@ -317,9 +325,6 @@ static void ZfN(poly_splitFFT_log2)(fpr *restrict f0, fpr *restrict f1,
     f1[0] = 1 = (2 - 3)*5 + (0 - 1)*4
     */
 
-#if _APPLE_M1_ == 1
-    float64x2x2_t t;
-    float64x2_t s, v;
 
     // 0, 2 | 1, 3
     vload2(t, &f[0]);
@@ -330,6 +335,7 @@ static void ZfN(poly_splitFFT_log2)(fpr *restrict f0, fpr *restrict f1,
     vfsub(v, t.val[0], t.val[1]);
     vfadd(t.val[0], t.val[0], t.val[1]);
 
+#if _APPLE_M1_ == 1
     vswap(v, v);
 
     vfmul_lane(t.val[1], s, v, 0);
@@ -337,32 +343,19 @@ static void ZfN(poly_splitFFT_log2)(fpr *restrict f0, fpr *restrict f1,
 
     vswap(t.val[1], t.val[1]);
 
+#else 
+    vswap(v, v);
+    vfmul_lane(t.val[1], s, v, 0);
+    
+
+#endif 
+
     vfmuln(t.val[0], t.val[0], 0.5);
     vfmuln(t.val[1], t.val[1], 0.5);
 
+
     vstore(&f0[0], t.val[0]);
     vstore(&f1[0], t.val[1]);
-#else
-    fpr a_re, a_im, b_re, b_im, d_re, d_im, t_re, t_im, s_re, s_im;
-    a_re = f[0];
-    b_re = f[1];
-    a_im = f[2];
-    b_im = f[3];
-    s_re = fpr_gm_tab[4] * 0.5;
-    s_im = fpr_gm_tab[5] * 0.5;
-
-    f0[0] = (a_re + b_re) * 0.5;
-    f0[1] = (a_im + b_im) * 0.5;
-
-    d_re = a_re - b_re;
-    d_im = a_im - b_im;
-
-    t_re = d_im * s_im + d_re * s_re;
-    t_im = d_im * s_re - d_re * s_im;
-
-    f1[0] = t_re;
-    f1[1] = t_im;
-#endif
 }
 
 static inline void ZfN(poly_splitFFT_log3)(fpr *restrict f0, fpr *restrict f1, const fpr *f)
@@ -566,3 +559,4 @@ void ZfN(poly_split_fft)(fpr *restrict f0, fpr *restrict f1,
         break;
     }
 }
+

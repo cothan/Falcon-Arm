@@ -30,7 +30,7 @@ static void ZfN(FFT_log2)(fpr *f)
     x_im:   2 =   2 + (  1*  5 +   3*  4)
     y_re:   1 =   0 - (  1*  4 -   3*  5)
     y_im:   3 =   2 - (  1*  5 +   3*  4)
-
+    
     Turn out this vectorize code is too short to be executed,
     the scalar version is consistently faster
 
@@ -51,19 +51,21 @@ static void ZfN(FFT_log2)(fpr *f)
     vstore2(&f[0], t2);
     */
 
-    fpr x_re, x_im, y_re, y_im, v_re, v_im;
+    fpr x_re, x_im, y_re, y_im, v_re, v_im, s_re, s_im;
 
     x_re = f[0];
     x_im = f[2];
     y_re = f[1];
     y_im = f[3];
-
-    v_re = y_re * fpr_gm_tab[4] - y_im * fpr_gm_tab[5];
-    v_im = y_re * fpr_gm_tab[5] + y_im * fpr_gm_tab[4];
+    s_re = fpr_gm_tab[4];
+    s_im = fpr_gm_tab[5];
+    
+    v_re = y_re*s_re - y_im*s_im;
+    v_im = y_re*s_im + y_im*s_re;
 
     f[0] = x_re + v_re;
-    f[1] = x_re - v_re;
     f[2] = x_im + v_im;
+    f[1] = x_re - v_re;
     f[3] = x_im - v_im;
 }
 
@@ -781,7 +783,7 @@ void ZfN(iFFT_log2)(fpr *f)
 
     Turn out this vectorize code is too short to be executed,
     the scalar version is consistently faster
-
+     
     float64x2x2_t tmp;
     float64x2_t v, s, t;
 
@@ -814,11 +816,11 @@ void ZfN(iFFT_log2)(fpr *f)
     y_re = f[1];
     x_im = f[2];
     y_im = f[3];
-    s_re = fpr_gm_tab[4] * 0.5;
-    s_im = fpr_gm_tab[5] * 0.5;
+    s_re = fpr_gm_tab[4]/2;
+    s_im = fpr_gm_tab[5]/2;
 
-    f[0] = (x_re + y_re) * 0.5;
-    f[2] = (x_im + y_im) * 0.5;
+    f[0] = (x_re + y_re)/2;
+    f[2] = (x_im + y_im)/2;
 
     x_re = x_re - y_re;
     x_im = x_im - y_im;
@@ -829,79 +831,82 @@ void ZfN(iFFT_log2)(fpr *f)
 
 static void ZfN(iFFT_log3)(fpr *f)
 {
-    /* 
-     * Total instructions: 27
-    y_re: 1 = (4 - 5) *  9 + (0 - 1) *  8
-    y_re: 3 = (6 - 7) * 11 + (2 - 3) * 10
+    /*
     y_im: 5 = (4 - 5) *  8 - (0 - 1) *  9
+    y_re: 1 = (4 - 5) *  9 + (0 - 1) *  8
     y_im: 7 = (6 - 7) * 10 - (2 - 3) * 11
+    y_re: 3 = (6 - 7) * 11 + (2 - 3) * 10
     x_re: 0 = 0 + 1
-    x_re: 2 = 2 + 3
     x_im: 4 = 4 + 5
+    x_re: 2 = 2 + 3
     x_im: 6 = 6 + 7
      */
-    // 0: 0, 2 - 0: 0, 4
-    // 1: 1, 3 - 1: 1, 5
-    // 2: 4, 6 - 2: 2, 6
-    // 3: 5, 7 - 3: 3, 7
-    float64x2x4_t tmp;
-    float64x2x2_t x_re_im, y_re_im, v, s_re_im;
 
-    vload2(x_re_im, &f[0]);
-    vload2(y_re_im, &f[4]);
+    float64x2x4_t t;
+    float64x2x2_t v, s;
 
-    vfsub(v.val[0], x_re_im.val[0], x_re_im.val[1]);
-    vfsub(v.val[1], y_re_im.val[0], y_re_im.val[1]);
-    vfadd(x_re_im.val[0], x_re_im.val[0], x_re_im.val[1]);
-    vfadd(x_re_im.val[1], y_re_im.val[0], y_re_im.val[1]);
+    // 0, 4
+    // 1, 5
+    // 2, 6
+    // 3, 7
+    vload4(t, &f[0]);
+    vloadx2(s, &fpr_gm_tab[8]);
 
-    // 0: 8, 10
-    // 1: 9, 11
-    vload2(s_re_im, &fpr_gm_tab[8]);
+    vfsub(v.val[0], t.val[0], t.val[1]);
+    vfsub(v.val[1], t.val[2], t.val[3]);
 
-    vfmul(y_re_im.val[0], v.val[1], s_re_im.val[1]);
-    vfma(y_re_im.val[0], y_re_im.val[0], v.val[0], s_re_im.val[0]);
-    vfmul(y_re_im.val[1], v.val[1], s_re_im.val[0]);
-    vfms(y_re_im.val[1], y_re_im.val[1], v.val[0], s_re_im.val[1]);
+    vfadd(t.val[0], t.val[0], t.val[1]);
+    vfadd(t.val[2], t.val[2], t.val[3]);
 
-    // x: 0,2 | 4,6
-    // y: 1,3 | 5,7
-    tmp.val[0] = vtrn1q_f64(x_re_im.val[0], y_re_im.val[0]);
-    tmp.val[1] = vtrn2q_f64(x_re_im.val[0], y_re_im.val[0]);
-    tmp.val[2] = vtrn1q_f64(x_re_im.val[1], y_re_im.val[1]);
-    tmp.val[3] = vtrn2q_f64(x_re_im.val[1], y_re_im.val[1]);
-    // tmp: 0,1 | 2,3 | 4,5 | 6,7
-    /* 
-    y_re: 2 = (4 - 6) * 5 + (0 - 2) * 4 
-    y_re: 3 = (5 - 7) * 5 + (1 - 3) * 4 
-    y_im: 6 = (4 - 6) * 4 - (0 - 2) * 5 
-    y_im: 7 = (5 - 7) * 4 - (1 - 3) * 5 
+    // 5,1 <- 1,5
+    // 7,3 <- 3,7
+    vswap(v.val[0], v.val[0]);
+    vswap(v.val[1], v.val[1]);
+
+    vfmul_lane(t.val[1], s.val[0], v.val[0], 0);
+    vfmul_lane(t.val[3], s.val[1], v.val[1], 0);
+
+    vfcmla_90(t.val[1], v.val[0], s.val[0]);
+    vfcmla_90(t.val[3], v.val[1], s.val[1]);
+
+    /*
+    y_im: 6 = (4 - 6) * 4 - (0 - 2) * 5
+    y_re: 2 = (4 - 6) * 5 + (0 - 2) * 4
+    y_im: 7 = (5 - 7) * 4 - (1 - 3) * 5
+    y_re: 3 = (5 - 7) * 5 + (1 - 3) * 4
+
     x_re: 0 = 0 + 2
-    x_re: 1 = 1 + 3
     x_im: 4 = 4 + 6
+    x_re: 1 = 1 + 3
     x_im: 5 = 5 + 7
     */
-    vload(s_re_im.val[0], &fpr_gm_tab[4]);
 
-    vfadd(x_re_im.val[0], tmp.val[0], tmp.val[1]);
-    vfadd(x_re_im.val[1], tmp.val[2], tmp.val[3]);
-    vfsub(v.val[0], tmp.val[0], tmp.val[1]);
-    vfsub(v.val[1], tmp.val[2], tmp.val[3]);
+    vfsub(v.val[0], t.val[0], t.val[2]);
+    vfsub(v.val[1], t.val[1], t.val[3]);
 
-    vfmuln(s_re_im.val[0], s_re_im.val[0], 0.25);
+    vfadd(t.val[0], t.val[0], t.val[2]);
+    vfadd(t.val[1], t.val[1], t.val[3]);
 
-    vfmul_lane(y_re_im.val[0], v.val[1], s_re_im.val[0], 1);
-    vfma_lane(y_re_im.val[0], y_re_im.val[0], v.val[0], s_re_im.val[0], 0);
+    vload(s.val[0], &fpr_gm_tab[4]);
 
-    vfmul_lane(y_re_im.val[1], v.val[1], s_re_im.val[0], 0);
-    vfms_lane(y_re_im.val[1], y_re_im.val[1], v.val[0], s_re_im.val[0], 1);
+    vswap(v.val[0], v.val[0]);
 
-    vfmuln(tmp.val[0], x_re_im.val[0], 0.25);
-    vfmuln(tmp.val[2], x_re_im.val[1], 0.25);
-    tmp.val[1] = y_re_im.val[0];
-    tmp.val[3] = y_re_im.val[1];
+    vfmuln(s.val[0], s.val[0], 0.25);
+    vfmul_lane(t.val[2], s.val[0], v.val[0], 0);
+    vfmul_lane(t.val[3], s.val[0], v.val[1], 0);
 
-    vstorex4(&f[0], tmp);
+    vfcmla_90(t.val[2], v.val[0], s.val[0]);
+    vfcmla_90(t.val[3], v.val[1], s.val[0]);
+
+    vfmuln(t.val[0], t.val[0], 0.25);
+    vfmuln(t.val[1], t.val[1], 0.25);
+    
+
+    vswap(t.val[1], t.val[1]);
+    vswap(t.val[2], t.val[2]);
+    vswap(t.val[3], t.val[3]);
+
+    vstore4(&f[0], t);
 }
 
 static void ZfN(iFFT_log4)(fpr *f)
@@ -1532,7 +1537,7 @@ void ZfN(FFT)(fpr *f, const unsigned logn)
         ZfN(FFT_logn2)(f, logn, level);
         ZfN(FFT_log5)(f, logn);
         break;
-
+    
     default:
         break;
     }
@@ -1577,7 +1582,7 @@ void ZfN(iFFT)(fpr *f, const unsigned logn)
         ZfN(iFFT_logn2)(f, logn, level, 0);
         ZfN(iFFT_logn1)(f, logn, 1);
         break;
-
+    
     default:
         break;
     }

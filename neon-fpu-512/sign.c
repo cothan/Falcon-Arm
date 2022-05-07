@@ -556,7 +556,6 @@ ffSampling_fft(samplerZ samp, void *samp_ctx,
 	 * of course way too insecure to be of any use).
 	 */
 	if (logn == 1) {
-#if _APPLE_M1_ == 1
         float64x2_t x, y, a, b, c, w;
         fpr buf[2];
 
@@ -577,28 +576,6 @@ ffSampling_fft(samplerZ samp, void *samp_ctx,
 
         z0[0] = fpr_of(samp(samp_ctx, buf[0], tree[2]));
 		z0[1] = fpr_of(samp(samp_ctx, buf[1], tree[2]));
-
-#else 
-        fpr x0, x1, y0, y1, sigma;
-		fpr a_re, a_im, b_re, b_im, c_re, c_im;
-
-		x0 = t1[0];
-		x1 = t1[1];
-		sigma = tree[3];
-		z1[0] = y0 = fpr_of(samp(samp_ctx, x0, sigma));
-		z1[1] = y1 = fpr_of(samp(samp_ctx, x1, sigma));
-		a_re = fpr_sub(x0, y0);
-		a_im = fpr_sub(x1, y1);
-		b_re = tree[0];
-		b_im = tree[1];
-		c_re = fpr_sub(fpr_mul(a_re, b_re), fpr_mul(a_im, b_im));
-		c_im = fpr_add(fpr_mul(a_re, b_im), fpr_mul(a_im, b_re));
-		x0 = fpr_add(c_re, t0[0]);
-		x1 = fpr_add(c_im, t0[1]);
-		sigma = tree[2];
-		z0[0] = fpr_of(samp(samp_ctx, x0, sigma));
-		z0[1] = fpr_of(samp(samp_ctx, x1, sigma));
-#endif
 
 		return;
 	}

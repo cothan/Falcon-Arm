@@ -10,7 +10,7 @@
 #include "api.h"
 #include "poly.h"
 
-#if BENCH_CYCLES == 1
+#if _APPLE_M1_ == 1
 #include "m1cycles.h"
 
 // Result is cycle per call
@@ -19,7 +19,7 @@
 #else
 // Result is nanosecond per call
 #define TIME(s) clock_gettime(CLOCK_MONOTONIC_RAW, &s);
-#define CALC(start, stop, ntests) ((double)((stop.tv_sec - start.tv_sec) * 10000000000 + (stop.tv_nsec - start.tv_nsec))) / ntests;
+#define CALC(start, stop, ntests) ((double)((stop.tv_sec - start.tv_sec) * 1000000000 + (stop.tv_nsec - start.tv_nsec))) / ntests;
 #endif
 
 #define NTESTS 10000
@@ -27,24 +27,18 @@
 #define FALCON_N (1 << FALCON_LOGN)
 #define FALCON_Q 12289
 
-void print_header()
-{
-    printf("\n| Function | logn | cycles |\n");
-    printf("|:-------------|----------:|-----------:|\n");
-}
-
 void test_FFT(fpr *f, unsigned logn)
 {
-#if BENCH_CYCLES == 0
+#if _APPLE_M1_ == 0
     struct timespec start, stop;
 #else
-    long long start, stop;
+    long long start_cc, stop_cc;
 #endif
     long long fft, ifft;
     unsigned ntests = NTESTS;
     if (logn < 7)
     {
-        ntests = NTESTS * 1000;
+        ntests = NTESTS * 100;
     }
     /* =================================== */
     TIME(start);
@@ -71,16 +65,16 @@ void test_FFT(fpr *f, unsigned logn)
 
 void test_NTT(uint16_t *a, unsigned logn)
 {
-#if BENCH_CYCLES == 0
+#if _APPLE_M1_ == 0
     struct timespec start, stop;
 #else
-    long long start, stop;
+    long long start_cc, stop_cc;
 #endif
     long long fft, ifft;
     unsigned ntests = NTESTS;
     if (logn < 7)
     {
-        ntests = NTESTS * 1000;
+        ntests = NTESTS * 100;
     }
     /* =================================== */
     TIME(start);
@@ -107,16 +101,16 @@ void test_NTT(uint16_t *a, unsigned logn)
 
 void test_poly_add(fpr *c, fpr *a, fpr *b, unsigned logn, char *string)
 {
-#if BENCH_CYCLES == 0
+#if _APPLE_M1_ == 0
     struct timespec start, stop;
 #else
-    long long start, stop;
+    long long start_cc, stop_cc;
 #endif
-    long long fft;
+    long long fft, ifft;
     unsigned ntests = NTESTS;
-    if (logn < 7)
+    if (logn < 10)
     {
-        ntests = NTESTS * 10000;
+        ntests = NTESTS * 1000;
     }
     /* =================================== */
     TIME(start);
@@ -127,21 +121,21 @@ void test_poly_add(fpr *c, fpr *a, fpr *b, unsigned logn, char *string)
     TIME(stop);
     fft = CALC(start, stop, ntests);
 
-    printf("| %8s | %8u | %8lld\n", string, logn, fft);
+    printf("%s, %u, %lld\n", string, logn, fft);
 }
 
 void test_poly_sub(fpr *c, fpr *a, fpr *b, unsigned logn, char *string)
 {
-#if BENCH_CYCLES == 0
+#if _APPLE_M1_ == 0
     struct timespec start, stop;
 #else
-    long long start, stop;
+    long long start_cc, stop_cc;
 #endif
-    long long fft;
+    long long fft, ifft;
     unsigned ntests = NTESTS;
-    if (logn < 7)
+    if (logn < 10)
     {
-        ntests = NTESTS * 10000;
+        ntests = NTESTS * 1000;
     }
     /* =================================== */
     TIME(start);
@@ -152,21 +146,21 @@ void test_poly_sub(fpr *c, fpr *a, fpr *b, unsigned logn, char *string)
     TIME(stop);
     fft = CALC(start, stop, ntests);
 
-    printf("| %8s | %8u | %8lld\n", string, logn, fft);
+    printf("%s, %u, %lld\n", string, logn, fft);
 }
 
 void test_poly_neg(fpr *c, fpr *a, fpr *b, unsigned logn, char *string)
 {
-#if BENCH_CYCLES == 0
+#if _APPLE_M1_ == 0
     struct timespec start, stop;
 #else
-    long long start, stop;
+    long long start_cc, stop_cc;
 #endif
-    long long fft;
+    long long fft, ifft;
     unsigned ntests = NTESTS;
-    if (logn < 7)
+    if (logn < 10)
     {
-        ntests = NTESTS * 10000;
+        ntests = NTESTS * 1000;
     }
     /* =================================== */
     TIME(start);
@@ -177,21 +171,21 @@ void test_poly_neg(fpr *c, fpr *a, fpr *b, unsigned logn, char *string)
     TIME(stop);
     fft = CALC(start, stop, ntests);
 
-    printf("| %8s | %8u | %8lld\n", string, logn, fft);
+    printf("%s, %u, %lld\n", string, logn, fft);
 }
 
 void test_poly_adj_fft(fpr *c, fpr *a, fpr *b, unsigned logn, char *string)
 {
-#if BENCH_CYCLES == 0
+#if _APPLE_M1_ == 0
     struct timespec start, stop;
 #else
-    long long start, stop;
+    long long start_cc, stop_cc;
 #endif
-    long long fft;
+    long long fft, ifft;
     unsigned ntests = NTESTS;
-    if (logn < 7)
+    if (logn < 10)
     {
-        ntests = NTESTS * 10000;
+        ntests = NTESTS * 1000;
     }
     /* =================================== */
     TIME(start);
@@ -202,21 +196,21 @@ void test_poly_adj_fft(fpr *c, fpr *a, fpr *b, unsigned logn, char *string)
     TIME(stop);
     fft = CALC(start, stop, ntests);
 
-    printf("| %8s | %8u | %8lld\n", string, logn, fft);
+    printf("%s, %u, %lld\n", string, logn, fft);
 }
 
 void test_poly_mul_fft(fpr *c, fpr *a, fpr *b, unsigned logn, char *string)
 {
-#if BENCH_CYCLES == 0
+#if _APPLE_M1_ == 0
     struct timespec start, stop;
 #else
-    long long start, stop;
+    long long start_cc, stop_cc;
 #endif
-    long long fft;
+    long long fft, ifft;
     unsigned ntests = NTESTS;
     if (logn < 7)
     {
-        ntests = NTESTS * 1000;
+        ntests = NTESTS * 100;
     }
     /* =================================== */
     TIME(start);
@@ -227,21 +221,21 @@ void test_poly_mul_fft(fpr *c, fpr *a, fpr *b, unsigned logn, char *string)
     TIME(stop);
     fft = CALC(start, stop, ntests);
 
-    printf("| %8s | %8u | %8lld\n", string, logn, fft);
+    printf("%s, %u, %lld\n", string, logn, fft);
 }
 
 void test_poly_invnorm2_fft(fpr *c, fpr *a, fpr *b, unsigned logn, char *string)
 {
-#if BENCH_CYCLES == 0
+#if _APPLE_M1_ == 0
     struct timespec start, stop;
 #else
-    long long start, stop;
+    long long start_cc, stop_cc;
 #endif
-    long long fft;
+    long long fft, ifft;
     unsigned ntests = NTESTS;
     if (logn < 7)
     {
-        ntests = NTESTS * 1000;
+        ntests = NTESTS * 100;
     }
     /* =================================== */
     TIME(start);
@@ -252,21 +246,21 @@ void test_poly_invnorm2_fft(fpr *c, fpr *a, fpr *b, unsigned logn, char *string)
     TIME(stop);
     fft = CALC(start, stop, ntests);
 
-    printf("| %8s | %8u | %8lld\n", string, logn, fft);
+    printf("%s, %u, %lld\n", string, logn, fft);
 }
 
 void test_poly_mul_autoadj_fft(fpr *c, fpr *a, fpr *b, unsigned logn, char *string)
 {
-#if BENCH_CYCLES == 0
+#if _APPLE_M1_ == 0
     struct timespec start, stop;
 #else
-    long long start, stop;
+    long long start_cc, stop_cc;
 #endif
-    long long fft;
+    long long fft, ifft;
     unsigned ntests = NTESTS;
-    if (logn < 7)
+    if (logn < 10)
     {
-        ntests = NTESTS * 10000;
+        ntests = NTESTS * 1000;
     }
     /* =================================== */
     TIME(start);
@@ -277,21 +271,21 @@ void test_poly_mul_autoadj_fft(fpr *c, fpr *a, fpr *b, unsigned logn, char *stri
     TIME(stop);
     fft = CALC(start, stop, ntests);
 
-    printf("| %8s | %8u | %8lld\n", string, logn, fft);
+    printf("%s, %u, %lld\n", string, logn, fft);
 }
 
 void test_poly_LDL_fft(fpr *c, fpr *a, fpr *b, unsigned logn, char *string)
 {
-#if BENCH_CYCLES == 0
+#if _APPLE_M1_ == 0
     struct timespec start, stop;
 #else
-    long long start, stop;
+    long long start_cc, stop_cc;
 #endif
-    long long fft;
+    long long fft, ifft;
     unsigned ntests = NTESTS;
-    if (logn < 7)
+    if (logn < 10)
     {
-        ntests = NTESTS * 10000;
+        ntests = NTESTS * 1000;
     }
     /* =================================== */
     TIME(start);
@@ -302,21 +296,21 @@ void test_poly_LDL_fft(fpr *c, fpr *a, fpr *b, unsigned logn, char *string)
     TIME(stop);
     fft = CALC(start, stop, ntests);
 
-    printf("| %8s | %8u | %8lld\n", string, logn, fft);
+    printf("%s, %u, %lld\n", string, logn, fft);
 }
 
-void test_poly_LDLmv_fft(fpr *d11, fpr *l01, const fpr *c, const fpr *a, const fpr *b, unsigned logn, char *string)
+void test_poly_LDLmv_fft(fpr *d11, fpr *l01, const fpr *c,const  fpr *a, const  fpr *b, unsigned logn, char *string)
 {
-#if BENCH_CYCLES == 0
+#if _APPLE_M1_ == 0
     struct timespec start, stop;
 #else
-    long long start, stop;
+    long long start_cc, stop_cc;
 #endif
-    long long fft;
+    long long fft, ifft;
     unsigned ntests = NTESTS;
-    if (logn < 7)
+    if (logn < 10)
     {
-        ntests = NTESTS * 10000;
+        ntests = NTESTS * 1000;
     }
     /* =================================== */
     TIME(start);
@@ -327,64 +321,13 @@ void test_poly_LDLmv_fft(fpr *d11, fpr *l01, const fpr *c, const fpr *a, const f
     TIME(stop);
     fft = CALC(start, stop, ntests);
 
-    printf("| %8s | %8u | %8lld\n", string, logn, fft);
-}
-
-void test_poly_split_fft(fpr *restrict f0, fpr *restrict f1,
-                         const fpr *restrict f, unsigned logn, char *string)
-{
-#if BENCH_CYCLES == 0
-    struct timespec start, stop;
-#else
-    long long start, stop;
-#endif
-    long long fft;
-    unsigned ntests = NTESTS;
-    if (logn < 7)
-    {
-        ntests = NTESTS * 10000;
-    }
-    /* =================================== */
-    TIME(start);
-    for (unsigned i = 0; i < ntests; i++)
-    {
-        ZfN(poly_split_fft)(f0, f1, f, logn);
-    }
-    TIME(stop);
-    fft = CALC(start, stop, ntests);
-
-    printf("| %8s | %8u | %8lld\n", string, logn, fft);
-}
-
-void test_poly_merge_fft(fpr *restrict f, const fpr *restrict f0,
-                         const fpr *restrict f1, unsigned logn, char *string)
-{
-#if BENCH_CYCLES == 0
-    struct timespec start, stop;
-#else
-    long long start, stop;
-#endif
-    long long fft;
-    unsigned ntests = NTESTS;
-    if (logn < 7)
-    {
-        ntests = NTESTS * 10000;
-    }
-    /* =================================== */
-    TIME(start);
-    for (unsigned i = 0; i < ntests; i++)
-    {
-        ZfN(poly_merge_fft)(f, f0, f1, logn);
-    }
-    TIME(stop);
-    fft = CALC(start, stop, ntests);
-
-    printf("| %8s | %8u | %8lld\n", string, logn, fft);
+    printf("%s, %u, %lld\n", string, logn, fft);
+    printf("=======\n");
 }
 
 int main()
 {
-    fpr f[FALCON_N], fa[FALCON_N], fb[FALCON_N], fc[FALCON_N], tmp[FALCON_N] = {0};
+    fpr f[FALCON_N], fa[FALCON_N], fb[FALCON_N], fc[FALCON_N], tmp[FALCON_N]={0};
     uint16_t a[FALCON_N];
     for (int i = 0; i < FALCON_N; i++)
     {
@@ -397,7 +340,7 @@ int main()
         a[i] = rand() % FALCON_Q;
     }
 
-#if BENCH_CYCLES == 1
+#if _APPLE_M1_ == 1
     setup_rdtsc();
 #endif
 
@@ -407,61 +350,18 @@ int main()
     }
 
     test_NTT(a, FALCON_LOGN);
-    
-    print_header();
+
     for (unsigned i = 0; i <= FALCON_LOGN; i++)
     {
         test_poly_add(fc, fa, fb, i, "poly_add");
-    }
-    print_header();
-    for (unsigned i = 0; i <= FALCON_LOGN; i++)
-    {
         test_poly_sub(fc, fa, fb, i, "poly_sub");
-    }
-    print_header();
-    for (unsigned i = 0; i <= FALCON_LOGN; i++)
-    {
         test_poly_neg(fc, fa, fb, i, "poly_neg");
-    }
-    print_header();
-    for (unsigned i = 0; i <= FALCON_LOGN; i++)
-    {
         test_poly_adj_fft(fc, fa, fb, i, "poly_adj_fft");
-    }
-    print_header();
-    for (unsigned i = 0; i <= FALCON_LOGN; i++)
-    {
         test_poly_mul_fft(fc, fa, fb, i, "poly_mul_fft");
-    }
-    print_header();
-    for (unsigned i = 0; i <= FALCON_LOGN; i++)
-    {
         test_poly_invnorm2_fft(fc, fa, fb, i, "poly_invnorm2_fft");
-    }
-    print_header();
-    for (unsigned i = 0; i <= FALCON_LOGN; i++)
-    {
         test_poly_mul_autoadj_fft(fc, fa, fb, i, "poly_mul_autoadj_fft");
-    }
-    print_header();
-    for (unsigned i = 0; i <= FALCON_LOGN; i++)
-    {
         test_poly_LDL_fft(fc, fa, fb, i, "poly_LDL_fft");
-    }
-    print_header();
-    for (unsigned i = 0; i <= FALCON_LOGN; i++)
-    {
         test_poly_LDLmv_fft(f, tmp, fc, fa, fb, i, "poly_LDLmv_fft");
-    }
-    print_header();
-    for (unsigned i = 0; i <= FALCON_LOGN; i++)
-    {
-        test_poly_split_fft(fa, fb, f, i, "poly_split_fft");
-    }
-    print_header();
-    for (unsigned i = 0; i <= FALCON_LOGN; i++)
-    {
-        test_poly_merge_fft(f, fa, fb, i, "poly_merge_fft");
     }
 
     return 0;
