@@ -10,7 +10,7 @@
 
 # CC = gcc
 CC = clang
-CFLAGS = -mtune=native -fomit-frame-pointer -W -Wall -O3 -Wextra -Wpedantic -Wshadow -Wundef
+CFLAGS = -fomit-frame-pointer -W -Wall -O3 -Wextra -Wpedantic -Wshadow -Wundef
 LD = clang
 LDFLAGS = 
 LIBS =
