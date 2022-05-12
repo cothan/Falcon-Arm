@@ -424,13 +424,13 @@ int main()
 #endif
 #endif
 
-    for (unsigned i = 0; i <= FALCON_LOGN; i++)
+/*     for (unsigned i = 0; i <= FALCON_LOGN; i++)
     {
         test_FFT(f, i);
-    }
+    } */
 
     test_NTT(a, FALCON_LOGN);
-
+/* 
     print_header();
     for (unsigned i = 0; i <= FALCON_LOGN; i++)
     {
@@ -485,7 +485,7 @@ int main()
     for (unsigned i = 0; i <= FALCON_LOGN; i++)
     {
         test_poly_merge_fft(f, fa, fb, i, "poly_merge_fft");
-    }
+    } */
 
     return 0;
 }
