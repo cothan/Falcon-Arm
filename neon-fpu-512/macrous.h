@@ -317,6 +317,48 @@
     z.val[2] = vhsubq_s16(z.val[2], t.val[2]);        \
     z.val[3] = vhsubq_s16(z.val[3], t.val[3]);
 
+#define montmul_x8(z, w, a, b, e, f, QMVM, t, k)      \
+    z.val[0] = vqdmulhq_s16(a.val[0], b.val[0]);      \
+    z.val[1] = vqdmulhq_s16(a.val[1], b.val[1]);      \
+    z.val[2] = vqdmulhq_s16(a.val[2], b.val[2]);      \
+    z.val[3] = vqdmulhq_s16(a.val[3], b.val[3]);      \
+    w.val[0] = vqdmulhq_s16(e.val[0], f.val[0]);      \
+    w.val[1] = vqdmulhq_s16(e.val[1], f.val[1]);      \
+    w.val[2] = vqdmulhq_s16(e.val[2], f.val[2]);      \
+    w.val[3] = vqdmulhq_s16(e.val[3], f.val[3]);      \
+    t.val[0] = vmulq_laneq_s16(b.val[0], QMVM, 1);    \
+    t.val[1] = vmulq_laneq_s16(b.val[1], QMVM, 1);    \
+    t.val[2] = vmulq_laneq_s16(b.val[2], QMVM, 1);    \
+    t.val[3] = vmulq_laneq_s16(b.val[3], QMVM, 1);    \
+    k.val[0] = vmulq_laneq_s16(f.val[0], QMVM, 1);    \
+    k.val[1] = vmulq_laneq_s16(f.val[1], QMVM, 1);    \
+    k.val[2] = vmulq_laneq_s16(f.val[2], QMVM, 1);    \
+    k.val[3] = vmulq_laneq_s16(f.val[3], QMVM, 1);    \
+    t.val[0] = vmulq_s16(a.val[0], t.val[0]);         \
+    t.val[1] = vmulq_s16(a.val[1], t.val[1]);         \
+    t.val[2] = vmulq_s16(a.val[2], t.val[2]);         \
+    t.val[3] = vmulq_s16(a.val[3], t.val[3]);         \
+    k.val[0] = vmulq_s16(e.val[0], k.val[0]);         \
+    k.val[1] = vmulq_s16(e.val[1], k.val[1]);         \
+    k.val[2] = vmulq_s16(e.val[2], k.val[2]);         \
+    k.val[3] = vmulq_s16(e.val[3], k.val[3]);         \
+    t.val[0] = vqdmulhq_laneq_s16(t.val[0], QMVM, 0); \
+    t.val[1] = vqdmulhq_laneq_s16(t.val[1], QMVM, 0); \
+    t.val[2] = vqdmulhq_laneq_s16(t.val[2], QMVM, 0); \
+    t.val[3] = vqdmulhq_laneq_s16(t.val[3], QMVM, 0); \
+    k.val[0] = vqdmulhq_laneq_s16(k.val[0], QMVM, 0); \
+    k.val[1] = vqdmulhq_laneq_s16(k.val[1], QMVM, 0); \
+    k.val[2] = vqdmulhq_laneq_s16(k.val[2], QMVM, 0); \
+    k.val[3] = vqdmulhq_laneq_s16(k.val[3], QMVM, 0); \
+    z.val[0] = vhsubq_s16(z.val[0], t.val[0]);        \
+    z.val[1] = vhsubq_s16(z.val[1], t.val[1]);        \
+    z.val[2] = vhsubq_s16(z.val[2], t.val[2]);        \
+    z.val[3] = vhsubq_s16(z.val[3], t.val[3]);        \
+    w.val[0] = vhsubq_s16(w.val[0], k.val[0]);        \
+    w.val[1] = vhsubq_s16(w.val[1], k.val[1]);        \
+    w.val[2] = vhsubq_s16(w.val[2], k.val[2]);        \
+    w.val[3] = vhsubq_s16(w.val[3], k.val[3]);
+
 // ------------ Barrett Reduction ------------
 /*
  * Barrett reduction, return [-Q/2, Q/2]

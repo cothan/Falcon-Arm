@@ -1301,8 +1301,9 @@ void ZfN(poly_montmul_ntt)(int16_t f[FALCON_N], const int16_t g[FALCON_N])
         vload_s16_x4(c, &f[i + 32]);
         vload_s16_x4(d, &g[i + 32]);
 
-        montmul_x4(e1, a, b, neon_qmvm, t);
-        montmul_x4(e2, c, d, neon_qmvm, k);
+        // montmul_x4(e1, a, b, neon_qmvm, t);
+        // montmul_x4(e2, c, d, neon_qmvm, k);
+        montmul_x8(e1, e2, a, b, c, d, neon_qmvm, t, k);
 
         vstore_s16_x4(&f[i], e1);
         vstore_s16_x4(&f[i + 32], e2);
